@@ -1,28 +1,32 @@
 pipeline {
     agent any
 
+    environment {
+        JAVA_HOME = '/usr/lib/jvm/java-23-openjdk-amd64'
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                // Récupère automatiquement le code du dépôt GitHub lié au job [cite: 53, 55]
                 checkout scm
             }
         }
-        stage('Compile') {
+        stage('Build Spring Boot') {
             steps {
-                script {
-                    // Compile le fichier HelloWorld.java présent dans le dossier courant [cite: 62, 63]
-                    sh 'javac HelloWorld.java'
-                }
+                sh 'mvn clean package -DskipTests'
             }
         }
-        stage('Run') {
-            steps {
-                script {
-                    // Exécute le programme compilé en utilisant votre chemin Java 23 [cite: 70, 80]
-                    sh '/usr/lib/jvm/java-23-openjdk-amd64/bin/java HelloWorld'
-                }
-            }
+    }
+
+    // This section replaces the "Post-build Actions" UI [cite: 43, 44]
+    post {
+        always {
+            emailext (
+                subject: "Status: ${currentBuild.fullDisplayName}",
+                body: "Build ${env.BUILD_NUMBER} finished. Status: ${currentBuild.currentResult}. Check here: ${env.BUILD_URL}",
+                to: 'limamahmedou2003@gmail.com' // Put your email address here [cite: 45]
+            )
         }
     }
 }
